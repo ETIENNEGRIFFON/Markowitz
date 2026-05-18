@@ -1,3 +1,4 @@
+
 import io
 from io import BytesIO
 from dataclasses import dataclass
@@ -8,37 +9,307 @@ import pandas as pd
 import streamlit as st
 from scipy.optimize import minimize
 
-st.set_page_config(page_title="Minimum Variance Portfolio", layout="wide")
 
+# =========================================================
+# PAGE CONFIGURATION
+# =========================================================
+# This controls the browser tab title and page layout.
+# Wide layout is better for dashboards, charts, and large matrices.
+st.set_page_config(
+    page_title="Minimum Variance Portfolio | Piraeus Bank",
+    page_icon="📈",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+
+# =========================================================
+# CONSTANTS
+# =========================================================
+# These are used for displaying numbers in either American or European format.
 US_LOCALE = "American"
 EU_LOCALE = "European"
 
 
 # =========================================================
-# Formatting helpers
+# PIRAEUS BANK STYLE / CUSTOM CSS
 # =========================================================
+# This makes the app look more professional and closer to
+# a Piraeus Bank-style internal dashboard.
+#
+# IMPORTANT:
+# The sidebar has a dark teal background, so general labels are white.
+# However, input boxes, dropdowns, and number fields need black text
+# and white backgrounds so they do not become invisible.
+st.markdown(
+    """
+    <style>
+    :root {
+        --piraeus-teal: #002F30;
+        --piraeus-teal-soft: #06484A;
+        --piraeus-yellow: #FFD900;
+        --piraeus-cream: #F7F5EF;
+        --piraeus-card: #FFFFFF;
+        --piraeus-muted: #6D7A7A;
+        --piraeus-border: #E4E0D5;
+    }
+
+    .stApp {
+        background: linear-gradient(135deg, #F7F5EF 0%, #EFEBDD 100%);
+        color: var(--piraeus-teal);
+        font-family: "Inter", "Segoe UI", sans-serif;
+    }
+
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        max-width: 1450px;
+    }
+
+    /* Sidebar background */
+    section[data-testid="stSidebar"] {
+        background: var(--piraeus-teal);
+        border-right: 4px solid var(--piraeus-yellow);
+    }
+
+    /* Sidebar labels/headings stay white */
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] div {
+        color: #FFFFFF !important;
+    }
+
+    /* Inputs must be readable */
+    section[data-testid="stSidebar"] input,
+    section[data-testid="stSidebar"] textarea,
+    section[data-testid="stSidebar"] select {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+    }
+
+    /* Selectbox value text */
+    .stSelectbox div[data-baseweb="select"] > div {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+    }
+
+    /* Multiselect value text */
+    .stMultiSelect div[data-baseweb="select"] > div {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+    }
+
+    /* Number input text */
+    .stNumberInput input {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+    }
+
+    /* Text input text */
+    .stTextInput input {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+    }
+
+    /* Main hero banner */
+    .hero {
+        background: linear-gradient(135deg, var(--piraeus-teal) 0%, var(--piraeus-teal-soft) 100%);
+        border-radius: 24px;
+        padding: 34px 38px;
+        box-shadow: 0 18px 45px rgba(0, 47, 48, 0.22);
+        border-bottom: 8px solid var(--piraeus-yellow);
+        margin-bottom: 24px;
+    }
+
+    .hero-kicker {
+        color: var(--piraeus-yellow);
+        font-weight: 800;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+
+    .hero-title {
+        color: #FFFFFF;
+        font-size: 44px;
+        line-height: 1.05;
+        font-weight: 900;
+        margin-bottom: 12px;
+    }
+
+    .hero-subtitle {
+        color: #DDEAEA;
+        font-size: 17px;
+        max-width: 950px;
+        line-height: 1.55;
+    }
+
+    .info-box {
+        background: #FFFFFF;
+        border-left: 6px solid var(--piraeus-yellow);
+        border-radius: 16px;
+        padding: 18px 20px;
+        color: var(--piraeus-teal);
+        box-shadow: 0 8px 22px rgba(0, 47, 48, 0.07);
+        margin-bottom: 20px;
+    }
+
+    .section-card {
+        background: rgba(255, 255, 255, 0.93);
+        border: 1px solid var(--piraeus-border);
+        border-radius: 22px;
+        padding: 24px;
+        box-shadow: 0 10px 28px rgba(0, 47, 48, 0.08);
+        margin-bottom: 20px;
+    }
+
+    .section-title {
+        color: var(--piraeus-teal);
+        font-size: 22px;
+        font-weight: 850;
+        margin-bottom: 6px;
+    }
+
+    .section-subtitle {
+        color: var(--piraeus-muted);
+        font-size: 14px;
+        margin-bottom: 18px;
+    }
+
+    .download-box {
+        background: linear-gradient(135deg, var(--piraeus-teal) 0%, #053F41 100%);
+        border-radius: 22px;
+        padding: 22px;
+        border: 1px solid rgba(255, 217, 0, 0.55);
+        box-shadow: 0 12px 28px rgba(0, 47, 48, 0.14);
+        margin-bottom: 15px;
+    }
+
+    .download-box h3 {
+        color: var(--piraeus-yellow) !important;
+        margin-top: 0;
+    }
+
+    .download-box p {
+        color: #EAF5F5;
+        margin-bottom: 8px;
+    }
+
+    /* Metric cards */
+    div[data-testid="stMetric"] {
+        background: #FFFFFF;
+        border: 1px solid var(--piraeus-border);
+        border-radius: 20px;
+        padding: 18px 18px 14px 18px;
+        box-shadow: 0 8px 22px rgba(0, 47, 48, 0.07);
+    }
+
+    div[data-testid="stMetric"] label {
+        color: var(--piraeus-muted) !important;
+        font-weight: 700;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: var(--piraeus-teal) !important;
+        font-weight: 900;
+    }
+
+    .stButton > button, .stDownloadButton > button {
+        background: var(--piraeus-yellow) !important;
+        color: var(--piraeus-teal) !important;
+        border: 0 !important;
+        border-radius: 14px !important;
+        font-weight: 850 !important;
+        padding: 0.75rem 1.1rem !important;
+        box-shadow: 0 8px 18px rgba(0, 47, 48, 0.16);
+    }
+
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(0, 47, 48, 0.22);
+    }
+
+    h1, h2, h3, h4 {
+        color: var(--piraeus-teal) !important;
+        letter-spacing: -0.02em;
+    }
+
+    div[data-testid="stDataFrame"] {
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid var(--piraeus-border);
+    }
+
+    .small-muted {
+        color: #DDEAEA;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .status-pill {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 217, 0, 0.25);
+        border: 1px solid rgba(255, 217, 0, 0.8);
+        color: var(--piraeus-teal);
+        font-weight: 750;
+        font-size: 13px;
+        margin-bottom: 14px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# =========================================================
+# FORMATTING HELPERS
+# =========================================================
+# These functions control how numbers are displayed.
+# European format changes decimal points into commas.
 def format_number_full(x, style="American"):
     if pd.isna(x):
         return ""
+
     if isinstance(x, (np.integer, int)):
         s = str(int(x))
     else:
         s = np.format_float_positional(float(x), unique=False, precision=15, trim="-")
+
     if style == EU_LOCALE:
         return s.replace(",", "X").replace(".", ",").replace("X", ".")
+
     return s
 
 
 def format_dataframe_for_display(df: pd.DataFrame, style: str) -> pd.DataFrame:
+    # Converts every value in a dataframe into formatted text.
     out = df.copy().astype(object)
     for col in out.columns:
         out[col] = out[col].map(lambda x: format_number_full(x, style))
     return out
 
 
+def pct_fmt(x):
+    return f"{x:.2%}"
+
+
+def money_fmt(x):
+    return f"{x:,.2f}"
+
+
 # =========================================================
-# File reading / parsing
+# FILE READING / PARSING
 # =========================================================
+# These functions read uploaded CSV or Excel files.
+# The CSV detector tries to determine whether the user is using
+# American formatting or European formatting.
 def detect_csv_style(content: bytes) -> Tuple[str, str, str]:
     sample = content[:4000].decode("utf-8-sig", errors="ignore")
     first_lines = [line for line in sample.splitlines() if line.strip()][:5]
@@ -47,8 +318,10 @@ def detect_csv_style(content: bytes) -> Tuple[str, str, str]:
     semicolons = joined.count(";")
     commas = joined.count(",")
 
+    # European CSV files often use semicolons as separators and commas as decimals.
     if semicolons > commas:
         return ";", ",", EU_LOCALE
+
     return ",", ".", US_LOCALE
 
 
@@ -59,6 +332,7 @@ def read_uploaded_table(uploaded_file) -> Tuple[pd.DataFrame, str]:
     name = uploaded_file.name.lower()
     content = uploaded_file.getvalue()
 
+    # Read CSV or Excel depending on file extension.
     if name.endswith(".csv"):
         sep, decimal, locale_style = detect_csv_style(content)
         df = pd.read_csv(
@@ -76,13 +350,16 @@ def read_uploaded_table(uploaded_file) -> Tuple[pd.DataFrame, str]:
     if df.empty:
         raise ValueError("Uploaded file is empty.")
 
+    # Assumes the first column is the date column.
     date_col = df.columns[0]
     df[date_col] = pd.to_datetime(df[date_col], errors="coerce", dayfirst=True)
     df = df.dropna(subset=[date_col]).set_index(date_col)
 
+    # Convert every other column into numeric values.
     for col in df.columns:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
+    # Remove columns that are completely empty.
     df = df.dropna(axis=1, how="all")
 
     if df.shape[1] < 3:
@@ -92,10 +369,11 @@ def read_uploaded_table(uploaded_file) -> Tuple[pd.DataFrame, str]:
 
 
 # =========================================================
-# Portfolio math
+# PORTFOLIO MATH
 # =========================================================
 @dataclass
 class OptimizationResult:
+    # This stores all important optimization outputs in one object.
     weights: np.ndarray
     success: bool
     message: str
@@ -107,10 +385,12 @@ class OptimizationResult:
 
 
 def infer_periods_per_year(freq: str) -> int:
+    # Used to convert annual risk-free rate into per-period risk-free rate.
     return {"Daily": 252, "Monthly": 12, "Yearly": 1}[freq]
 
 
 def compute_log_returns(prices: pd.DataFrame) -> pd.DataFrame:
+    # Log return formula: ln(current price / previous price)
     returns = np.log(prices / prices.shift(1))
     return returns.dropna(how="all")
 
@@ -120,6 +400,7 @@ def convert_risk_free_to_periodic(
     periods_per_year: int,
     rf_input_mode: str,
 ) -> pd.Series:
+    # Converts the risk-free rate into the same frequency as the return data.
     if rf_input_mode == "Annual percent (e.g. 5.24)":
         return rf_series_input / (100.0 * periods_per_year)
     elif rf_input_mode == "Annual decimal (e.g. 0.0524)":
@@ -131,18 +412,23 @@ def convert_risk_free_to_periodic(
 
 
 def portfolio_excess_return(weights: np.ndarray, mu_excess: np.ndarray) -> float:
+    # Portfolio expected excess return = weights dot average risk premia.
     return float(weights @ mu_excess)
 
 
 def portfolio_variance(weights: np.ndarray, cov: np.ndarray) -> float:
+    # Portfolio variance = w' Σ w.
     return float(weights @ cov @ weights)
 
 
 def portfolio_volatility(weights: np.ndarray, cov: np.ndarray) -> float:
+    # Portfolio volatility = square root of variance.
     return float(np.sqrt(portfolio_variance(weights, cov)))
 
 
 def parse_fixed_weights(text: str, asset_names: List[str]) -> Dict[str, float]:
+    # Allows the user to manually fix certain weights.
+    # Example: AAPL=0.10, MSFT=0.15
     fixed = {}
     if not text or not text.strip():
         return fixed
@@ -153,6 +439,7 @@ def parse_fixed_weights(text: str, asset_names: List[str]) -> Dict[str, float]:
     for part in parts:
         if "=" not in part:
             raise ValueError(f"Invalid fixed-weight entry: '{part}'. Use ASSET=0.10")
+
         asset_raw, weight_raw = part.split("=", 1)
         asset_key = asset_raw.strip().upper()
 
@@ -170,27 +457,30 @@ def build_lagrangian_matrix(
     include_target_return: bool,
     fixed_weights: Optional[Dict[str, float]] = None,
 ) -> pd.DataFrame:
+    # This creates the Lagrangian-style matrix used to show
+    # the optimization structure behind the portfolio.
     assets = list(cov.index)
     fixed_weights = fixed_weights or {}
 
+    # The top-left part is 2 times the covariance matrix.
     base = 2.0 * cov.values
 
     constraint_cols = []
     constraint_rows = []
     row_col_names = []
 
-    # Sum of weights constraint
+    # Constraint: weights must sum to 1.
     constraint_cols.append(-np.ones((len(assets), 1)))
     constraint_rows.append(np.ones((1, len(assets))))
     row_col_names.append("sum_weights")
 
-    # Target return constraint
+    # Optional constraint: portfolio must hit a target excess return.
     if include_target_return:
         constraint_cols.append(-mu.values.reshape(-1, 1))
         constraint_rows.append(mu.values.reshape(1, -1))
         row_col_names.append("target_return")
 
-    # Fixed-weight constraints
+    # Optional fixed-weight constraints.
     for asset_name in fixed_weights.keys():
         col = np.zeros((len(assets), 1))
         row = np.zeros((1, len(assets)))
@@ -222,6 +512,14 @@ def solve_min_variance_with_constraints(
     long_only: bool = True,
     use_bank_constraint: bool = False,
 ) -> OptimizationResult:
+    # This is the main optimization function.
+    # It minimizes portfolio variance subject to:
+    # 1. weights summing to 1
+    # 2. optional target return
+    # 3. optional fixed weights
+    # 4. optional long-only constraint
+    # 5. optional 10% max position constraint
+
     assets = list(mu_excess.index)
     mu = mu_excess.values
     sigma = cov.values
@@ -229,22 +527,29 @@ def solve_min_variance_with_constraints(
 
     fixed_weights = fixed_weights or {}
     fixed_sum = sum(fixed_weights.values())
+
     if fixed_sum > 1 + 1e-12:
         raise ValueError("Fixed weights sum to more than 1.")
 
     fixed_idx = {assets.index(k): v for k, v in fixed_weights.items()}
 
+    # Start with equal weights.
     x0 = np.repeat(1.0 / n, n)
+
+    # Apply fixed weights to the initial guess.
     for idx, val in fixed_idx.items():
         x0[idx] = val
 
+    # Distribute the remaining weight across free assets.
     free_idx = [i for i in range(n) if i not in fixed_idx]
     remaining = 1.0 - fixed_sum
+
     if free_idx:
         free_guess = remaining / len(free_idx)
         for i in free_idx:
             x0[i] = free_guess
 
+    # Bounds control the minimum and maximum weight allowed for each asset.
     if long_only:
         upper_bound = 0.10 if use_bank_constraint else 1.0
         bounds = [(0.0, upper_bound) for _ in range(n)]
@@ -252,18 +557,22 @@ def solve_min_variance_with_constraints(
         upper_bound = 0.10 if use_bank_constraint else 1.0
         bounds = [(-1.0, upper_bound) for _ in range(n)]
 
+    # Constraint: all weights must sum to 1.
     constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1.0}]
 
+    # Optional target return constraint.
     if target_excess_return is not None:
         constraints.append(
             {"type": "eq", "fun": lambda w, tr=target_excess_return: float(w @ mu) - tr}
         )
 
+    # Optional fixed weight constraints.
     for idx, val in fixed_idx.items():
         constraints.append(
             {"type": "eq", "fun": lambda w, i=idx, v=val: w[i] - v}
         )
 
+    # Run scipy's SLSQP optimizer.
     result = minimize(
         fun=lambda w: portfolio_variance(w, sigma),
         x0=x0,
@@ -274,12 +583,15 @@ def solve_min_variance_with_constraints(
     )
 
     w = result.x
+
+    # Clean up tiny negative values if long-only.
     if long_only:
         w = np.clip(w, 0, None)
 
     if np.sum(w) == 0:
         raise ValueError("Optimization returned zero weights.")
 
+    # Normalize weights to ensure they sum to 1.
     w = w / np.sum(w)
 
     lagrangian_matrix = build_lagrangian_matrix(
@@ -302,8 +614,12 @@ def solve_min_variance_with_constraints(
 
 
 # =========================================================
-# Excel export with formulas
+# EXCEL EXPORT WITH FORMULAS
 # =========================================================
+# This function creates an Excel workbook in memory.
+# It exports raw data, prices, weights, covariance matrix,
+# Lagrangian matrix, risk-free conversion, log returns,
+# risk premia, and summary outputs.
 def create_excel_download(
     raw_df: pd.DataFrame,
     prices_df: pd.DataFrame,
@@ -355,6 +671,7 @@ def create_excel_download(
         ws_raw = wb["Raw Data"]
         ws_prices = wb["Prices"]
 
+        # Risk-free conversion sheet.
         ws_rf = wb.create_sheet("Risk Free Periodic")
         ws_rf["A1"] = "DATE"
         ws_rf["B1"] = "Risk-Free Per Period"
@@ -374,6 +691,7 @@ def create_excel_download(
             else:
                 ws_rf[f"B{excel_row}"] = f"='Raw Data'!{raw_rf_col_letter}{excel_row}"
 
+        # Log returns sheet.
         ws_lr = wb.create_sheet("Log Returns")
         ws_lr["A1"] = "DATE"
 
@@ -397,13 +715,16 @@ def create_excel_download(
                     value=f"=LN('Prices'!{col_letter}{price_row}/'Prices'!{col_letter}{price_row-1})"
                 )
 
+        # Risk premia sheet.
         ws_rp = wb.create_sheet("Risk Premia")
         ws_rp["A1"] = "DATE"
+
         for j, asset in enumerate(asset_names, start=2):
             ws_rp.cell(row=1, column=j, value=asset)
 
         for i in range(2, len(prices_df) + 1):
             ws_rp[f"A{i}"] = f"='Log Returns'!A{i}"
+
             for j, asset in enumerate(asset_names, start=2):
                 lr_col_letter = ws_lr.cell(row=1, column=j).column_letter
                 ws_rp.cell(
@@ -412,6 +733,7 @@ def create_excel_download(
                     value=f"='Log Returns'!{lr_col_letter}{i}-'Risk Free Periodic'!B{i+1}"
                 )
 
+        # Average risk premia sheet.
         ws_avg = wb.create_sheet("Average Risk Premia")
         ws_avg["A1"] = "Asset"
         ws_avg["B1"] = "Average Risk Premium"
@@ -430,15 +752,38 @@ def create_excel_download(
 
 
 # =========================================================
-# UI
+# MAIN APP HEADER
 # =========================================================
-st.title("Minimum Variance Portfolio from Risk Premia")
-st.caption("Upload price data, convert to log returns and excess returns, and solve a constrained minimum variance portfolio.")
+st.markdown(
+    """
+    <div class="hero">
+        <div class="hero-kicker">Piraeus Bank • Portfolio Optimization Tool</div>
+        <div class="hero-title">Minimum Variance Portfolio Dashboard</div>
+        <div class="hero-subtitle">
+            Upload price data, convert prices into log returns and risk premia, then solve a constrained
+            minimum variance portfolio with optional target return, fixed weights, long-only settings,
+            and a 10% bank-style position limit.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
+
+# =========================================================
+# SIDEBAR INPUTS
+# =========================================================
 with st.sidebar:
-    st.header("Inputs")
+    st.markdown("### Data Inputs")
+    st.markdown(
+        "<p class='small-muted'>Upload a CSV or Excel file. The first column should be dates. Other columns should be asset prices and one risk-free rate column.</p>",
+        unsafe_allow_html=True,
+    )
+
     uploaded_file = st.file_uploader("Upload CSV or Excel file", type=["csv", "xlsx", "xls"])
+
     frequency = st.selectbox("Data frequency", ["Daily", "Monthly", "Yearly"], index=1)
+
     rf_input_mode = st.selectbox(
         "Risk-free input format",
         [
@@ -449,182 +794,323 @@ with st.sidebar:
         index=0,
     )
 
-if uploaded_file is not None:
-    try:
-        raw_df, detected_locale = read_uploaded_table(uploaded_file)
 
-        st.sidebar.write(f"Detected format: {detected_locale}")
+# =========================================================
+# EMPTY STATE
+# =========================================================
+if uploaded_file is None:
+    st.markdown(
+        """
+        <div class="info-box">
+            <b>Start here:</b> upload your CSV or Excel file from the sidebar.
+            The app will calculate log returns, risk premia, covariance matrix, optimized weights,
+            and an exportable Excel workbook.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-        all_cols = list(raw_df.columns)
-        default_rf = all_cols[-1]
-        default_assets = [c for c in all_cols if c != default_rf]
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Model", "Minimum Variance")
+    c2.metric("Default Frequency", "Monthly")
+    c3.metric("Export", "Excel Workbook")
 
-        risk_free_col = st.sidebar.selectbox("Risk-free column", all_cols, index=all_cols.index(default_rf))
-        asset_cols = st.sidebar.multiselect("Asset columns", all_cols, default=default_assets)
+    st.stop()
 
-        if risk_free_col in asset_cols:
-            st.error("Risk-free column cannot also be an asset column.")
-            st.stop()
 
-        if len(asset_cols) < 2:
-            st.error("Please select at least two assets.")
-            st.stop()
+# =========================================================
+# MAIN APP LOGIC
+# =========================================================
+try:
+    # Read the uploaded file and detect number format.
+    raw_df, detected_locale = read_uploaded_table(uploaded_file)
 
-        locale_style = st.sidebar.selectbox("Display format", [detected_locale, US_LOCALE, EU_LOCALE], index=0)
+    st.markdown(
+        "<span class='status-pill'>File uploaded successfully</span>",
+        unsafe_allow_html=True,
+    )
 
-        periods = infer_periods_per_year(frequency)
+    st.sidebar.write(f"Detected format: {detected_locale}")
 
-        prices = raw_df[asset_cols].copy().dropna(how="all")
-        rf_series_input = raw_df[risk_free_col].copy()
+    # Column selection.
+    all_cols = list(raw_df.columns)
+    default_rf = all_cols[-1]
+    default_assets = [c for c in all_cols if c != default_rf]
 
-        asset_log_returns = compute_log_returns(prices)
+    risk_free_col = st.sidebar.selectbox(
+        "Risk-free column",
+        all_cols,
+        index=all_cols.index(default_rf)
+    )
 
-        rf_periodic = convert_risk_free_to_periodic(
-            rf_series_input=rf_series_input,
-            periods_per_year=periods,
-            rf_input_mode=rf_input_mode,
-        )
-        rf_periodic = rf_periodic.reindex(asset_log_returns.index)
+    asset_cols = st.sidebar.multiselect(
+        "Asset columns",
+        all_cols,
+        default=default_assets
+    )
 
-        risk_premia = asset_log_returns.sub(rf_periodic, axis=0).dropna(how="any")
+    if risk_free_col in asset_cols:
+        st.error("Risk-free column cannot also be an asset column.")
+        st.stop()
 
-        mean_risk_premia = risk_premia.mean()
-        covariance_matrix = risk_premia.cov()
+    if len(asset_cols) < 2:
+        st.error("Please select at least two assets.")
+        st.stop()
 
-        with st.sidebar:
-            st.header("Constraints")
-            use_target = st.checkbox("Set target portfolio excess return", value=False)
-            target_excess_return = None
-            if use_target:
-                target_excess_return = st.number_input(
-                    "Target excess return per period",
-                    min_value=-1.0,
-                    max_value=2.0,
-                    value=float(mean_risk_premia.mean()),
-                    step=0.000001,
-                    format="%.15f",
-                )
+    locale_style = st.sidebar.selectbox(
+        "Display format",
+        [detected_locale, US_LOCALE, EU_LOCALE],
+        index=0
+    )
 
-            use_fixed_weights = st.checkbox("Fix one or more stock weights", value=False)
-            fixed_weights_text = ""
-            if use_fixed_weights:
-                st.caption("Format: APPLE=0.10, WALMART=0.15")
-                fixed_weights_text = st.text_input("Fixed weights", value="")
+    periods = infer_periods_per_year(frequency)
 
-            long_only = st.checkbox("Long-only (weights ≥ 0)", value=True)
-            use_bank_constraint = st.checkbox("Bank constraint: max 10% per position", value=False)
+    # Separate asset prices and risk-free column.
+    prices = raw_df[asset_cols].copy().dropna(how="all")
+    rf_series_input = raw_df[risk_free_col].copy()
 
-        fixed_weights = parse_fixed_weights(fixed_weights_text, asset_cols) if use_fixed_weights else {}
+    # Calculate log returns.
+    asset_log_returns = compute_log_returns(prices)
 
-        result = solve_min_variance_with_constraints(
-            mu_excess=mean_risk_premia,
-            cov=covariance_matrix,
-            target_excess_return=target_excess_return if use_target else None,
-            fixed_weights=fixed_weights,
-            long_only=long_only,
-            use_bank_constraint=use_bank_constraint,
-        )
+    # Convert risk-free rate into per-period value.
+    rf_periodic = convert_risk_free_to_periodic(
+        rf_series_input=rf_series_input,
+        periods_per_year=periods,
+        rf_input_mode=rf_input_mode,
+    )
 
-        weights_df = pd.DataFrame({
-            "Asset": asset_cols,
-            "Weight": result.weights,
-            "Mean Risk Premium": mean_risk_premia.values,
-        }).sort_values("Weight", ascending=False).reset_index(drop=True)
+    # Align risk-free rate with return dates.
+    rf_periodic = rf_periodic.reindex(asset_log_returns.index)
 
+    # Risk premia = asset log returns minus risk-free rate.
+    risk_premia = asset_log_returns.sub(rf_periodic, axis=0).dropna(how="any")
+
+    # Average risk premia and covariance matrix are the two main optimization inputs.
+    mean_risk_premia = risk_premia.mean()
+    covariance_matrix = risk_premia.cov()
+
+    # Constraint controls appear only after the file is loaded.
+    with st.sidebar:
         st.divider()
+        st.markdown("### Constraints")
 
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Excess Return", format_number_full(result.portfolio_excess_return, locale_style))
-        m2.metric("Variance", format_number_full(result.portfolio_variance, locale_style))
-        m3.metric("Volatility", format_number_full(result.portfolio_volatility, locale_style))
-        m4.metric("Sum of Weights", format_number_full(float(np.sum(result.weights)), locale_style))
+        use_target = st.checkbox("Set target portfolio excess return", value=False)
+        target_excess_return = None
 
-        if result.success:
-            st.success("Optimization solved successfully.")
-        else:
-            st.warning(f"Solver warning: {result.message}")
+        if use_target:
+            target_excess_return = st.number_input(
+                "Target excess return per period",
+                min_value=-1.0,
+                max_value=2.0,
+                value=float(mean_risk_premia.mean()),
+                step=0.000001,
+                format="%.15f",
+            )
 
-        chart_col, table_col = st.columns([1.1, 1])
+        use_fixed_weights = st.checkbox("Fix one or more stock weights", value=False)
+        fixed_weights_text = ""
 
-        with chart_col:
-            st.subheader("Portfolio Weights")
-            st.bar_chart(pd.DataFrame({"Weight": result.weights}, index=asset_cols))
+        if use_fixed_weights:
+            st.caption("Format: APPLE=0.10, WALMART=0.15")
+            fixed_weights_text = st.text_input("Fixed weights", value="")
 
-        with table_col:
-            st.subheader("Weights Table")
-            display_weights = weights_df.copy()
-            display_weights["Weight"] = display_weights["Weight"].map(lambda x: format_number_full(x, locale_style))
-            display_weights["Mean Risk Premium"] = display_weights["Mean Risk Premium"].map(lambda x: format_number_full(x, locale_style))
-            st.dataframe(display_weights, use_container_width=True)
+        long_only = st.checkbox("Long-only (weights ≥ 0)", value=True)
+        use_bank_constraint = st.checkbox("Bank constraint: max 10% per position", value=False)
 
-        st.divider()
+        investment_amount = st.number_input(
+            "Investment Amount",
+            min_value=0.0,
+            value=10000.0,
+            step=1000.0,
+            format="%.2f",
+        )
 
-        tab1, tab2, tab3, tab4 = st.tabs(["Portfolio", "Risk", "Data", "Download"])
+    # Convert fixed weights from text into dictionary.
+    fixed_weights = parse_fixed_weights(fixed_weights_text, asset_cols) if use_fixed_weights else {}
 
-        with tab1:
-            st.subheader("Average Excess Returns")
-            avg_df = pd.DataFrame({
-                "Asset": mean_risk_premia.index,
-                "Average Risk Premium": [format_number_full(x, locale_style) for x in mean_risk_premia.values]
-            })
-            st.dataframe(avg_df, use_container_width=True)
+    # Run optimization.
+    result = solve_min_variance_with_constraints(
+        mu_excess=mean_risk_premia,
+        cov=covariance_matrix,
+        target_excess_return=target_excess_return if use_target else None,
+        fixed_weights=fixed_weights,
+        long_only=long_only,
+        use_bank_constraint=use_bank_constraint,
+    )
 
-        with tab2:
-            st.subheader("Covariance Matrix")
-            cov_display = format_dataframe_for_display(result.covariance_matrix, locale_style)
-            st.dataframe(cov_display, use_container_width=True)
+    # Build final weights table.
+    weights_df = pd.DataFrame({
+        "Asset": asset_cols,
+        "Weight": result.weights,
+        "Allocation Amount": result.weights * investment_amount,
+        "Mean Risk Premium": mean_risk_premia.values,
+    }).sort_values("Weight", ascending=False).reset_index(drop=True)
 
-            st.subheader("Optimized Lagrangian Matrix")
-            lag_display = format_dataframe_for_display(result.lagrangian_matrix, locale_style)
-            st.dataframe(lag_display, use_container_width=True)
+    # =====================================================
+    # EXECUTIVE SUMMARY METRICS
+    # =====================================================
+    st.markdown("### Executive Summary")
 
-        with tab3:
-            st.subheader("Input Data")
-            st.dataframe(raw_df, use_container_width=True)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Excess Return", format_number_full(result.portfolio_excess_return, locale_style))
+    m2.metric("Variance", format_number_full(result.portfolio_variance, locale_style))
+    m3.metric("Volatility", format_number_full(result.portfolio_volatility, locale_style))
+    m4.metric("Sum of Weights", format_number_full(float(np.sum(result.weights)), locale_style))
 
-            st.subheader("Converted Risk-Free Rate")
-            rf_used_df = pd.DataFrame({"Risk-Free Per Period": rf_periodic})
-            st.dataframe(rf_used_df, use_container_width=True)
+    if result.success:
+        st.success("Optimization solved successfully.")
+    else:
+        st.warning(f"Solver warning: {result.message}")
 
-            st.subheader("Log Returns")
-            st.dataframe(asset_log_returns, use_container_width=True)
+    # =====================================================
+    # MAIN WEIGHTS SECTION
+    # =====================================================
+    st.markdown("### Portfolio Allocation")
 
-            st.subheader("Risk Premia")
-            st.dataframe(risk_premia, use_container_width=True)
+    chart_col, table_col = st.columns([1.1, 1])
 
-        with tab4:
-            st.subheader("Download Results")
-            st.write("Export the workbook with formulas and optimization outputs.")
+    with chart_col:
+        st.markdown(
+            """
+            <div class="section-title">Portfolio Weights</div>
+            <div class="section-subtitle">Visual allocation across selected assets.</div>
+            """,
+            unsafe_allow_html=True,
+        )
+        chart_df = pd.DataFrame({"Weight": result.weights}, index=asset_cols)
+        st.bar_chart(chart_df, height=360)
 
-            try:
-                excel_data = create_excel_download(
-                    raw_df=raw_df,
-                    prices_df=prices,
-                    rf_series_input=rf_series_input,
-                    rf_input_mode=rf_input_mode,
-                    periods_per_year=periods,
-                    log_returns=asset_log_returns,
-                    risk_premia=risk_premia,
-                    avg_risk_premia=mean_risk_premia,
-                    weights_df=weights_df,
-                    cov_df=result.covariance_matrix,
-                    lagrangian_df=result.lagrangian_matrix,
-                    portfolio_excess_return=result.portfolio_excess_return,
-                    portfolio_variance_value=result.portfolio_variance,
-                    portfolio_volatility_value=result.portfolio_volatility,
-                )
+    with table_col:
+        st.markdown(
+            """
+            <div class="section-title">Weights Table</div>
+            <div class="section-subtitle">Optimized weight and investment amount per asset.</div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-                st.download_button(
-                    label="Download Excel File",
-                    data=excel_data,
-                    file_name="portfolio_results.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                )
-            except Exception as export_error:
-                st.error(
-                    "Excel export failed. Most likely the Excel writer package is missing. "
-                    "Run: py -m pip install openpyxl"
-                )
-                st.code(str(export_error))
-    except Exception as e:
-        st.error(f"Error: {e}")
+        display_weights = weights_df.copy()
+        display_weights["Weight"] = display_weights["Weight"].map(lambda x: format_number_full(x, locale_style))
+        display_weights["Allocation Amount"] = display_weights["Allocation Amount"].map(lambda x: format_number_full(x, locale_style))
+        display_weights["Mean Risk Premium"] = display_weights["Mean Risk Premium"].map(lambda x: format_number_full(x, locale_style))
+
+        st.dataframe(display_weights, use_container_width=True, height=360)
+
+    # =====================================================
+    # DETAILED OUTPUT TABS
+    # =====================================================
+    tab1, tab2, tab3, tab4 = st.tabs(["Portfolio", "Risk", "Data", "Download"])
+
+    with tab1:
+        st.markdown(
+            """
+            <div class="section-title">Average Excess Returns</div>
+            <div class="section-subtitle">Mean risk premium for each selected asset.</div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        avg_df = pd.DataFrame({
+            "Asset": mean_risk_premia.index,
+            "Average Risk Premium": [format_number_full(x, locale_style) for x in mean_risk_premia.values]
+        })
+
+        st.dataframe(avg_df, use_container_width=True)
+
+    with tab2:
+        st.markdown(
+            """
+            <div class="section-title">Covariance Matrix</div>
+            <div class="section-subtitle">Measures how asset risk premia move together.</div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        cov_display = format_dataframe_for_display(result.covariance_matrix, locale_style)
+        st.dataframe(cov_display, use_container_width=True)
+
+        st.markdown(
+            """
+            <div class="section-title">Optimized Lagrangian Matrix</div>
+            <div class="section-subtitle">Shows the constraint structure used in the optimization.</div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        lag_display = format_dataframe_for_display(result.lagrangian_matrix, locale_style)
+        st.dataframe(lag_display, use_container_width=True)
+
+    with tab3:
+        st.markdown(
+            """
+            <div class="section-title">Input and Calculation Data</div>
+            <div class="section-subtitle">Raw data, converted risk-free rate, log returns, and risk premia.</div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.subheader("Input Data")
+        st.dataframe(raw_df, use_container_width=True)
+
+        st.subheader("Converted Risk-Free Rate")
+        rf_used_df = pd.DataFrame({"Risk-Free Per Period": rf_periodic})
+        st.dataframe(rf_used_df, use_container_width=True)
+
+        st.subheader("Log Returns")
+        st.dataframe(asset_log_returns, use_container_width=True)
+
+        st.subheader("Risk Premia")
+        st.dataframe(risk_premia, use_container_width=True)
+
+    with tab4:
+        st.markdown(
+            """
+            <div class="download-box">
+                <h3>Download Portfolio Results</h3>
+                <p>Export the workbook with formulas, risk premia, covariance matrix, Lagrangian matrix, and final optimization outputs.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        try:
+            excel_data = create_excel_download(
+                raw_df=raw_df,
+                prices_df=prices,
+                rf_series_input=rf_series_input,
+                rf_input_mode=rf_input_mode,
+                periods_per_year=periods,
+                log_returns=asset_log_returns,
+                risk_premia=risk_premia,
+                avg_risk_premia=mean_risk_premia,
+                weights_df=weights_df,
+                cov_df=result.covariance_matrix,
+                lagrangian_df=result.lagrangian_matrix,
+                portfolio_excess_return=result.portfolio_excess_return,
+                portfolio_variance_value=result.portfolio_variance,
+                portfolio_volatility_value=result.portfolio_volatility,
+            )
+
+            st.download_button(
+                label="Download Excel File",
+                data=excel_data,
+                file_name="portfolio_results.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+            )
+
+        except Exception as export_error:
+            st.error(
+                "Excel export failed. Most likely the Excel writer package is missing. "
+                "Run: py -m pip install openpyxl"
+            )
+            st.code(str(export_error))
+
+except Exception as e:
+    # Shows a clear error if the uploaded file or optimization settings cause a problem.
+    st.error(f"Error: {e}")
+
+
+# To run this app:
+# python -m streamlit run app.py 
+
