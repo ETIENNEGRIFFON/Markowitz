@@ -66,56 +66,63 @@ st.markdown(
         max-width: 1450px;
     }
 
-    /* Sidebar background */
+    /* Sidebar old color scheme */
     section[data-testid="stSidebar"] {
         background: var(--piraeus-teal);
         border-right: 4px solid var(--piraeus-yellow);
     }
 
-    /* Sidebar labels/headings stay white */
-    section[data-testid="stSidebar"] label,
-    section[data-testid="stSidebar"] p,
-    section[data-testid="stSidebar"] span,
+    /* Sidebar normal text stays white */
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3,
-    section[data-testid="stSidebar"] div {
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] label {
         color: #FFFFFF !important;
     }
 
-    /* Inputs must be readable */
+    /* Inputs are white boxes with black text */
     section[data-testid="stSidebar"] input,
-    section[data-testid="stSidebar"] textarea,
-    section[data-testid="stSidebar"] select {
-        color: #000000 !important;
+    section[data-testid="stSidebar"] textarea {
         background-color: #FFFFFF !important;
+        color: #000000 !important;
     }
 
-    /* Selectbox value text */
-    .stSelectbox div[data-baseweb="select"] > div {
-        color: #000000 !important;
+    /* Selectbox and dropdown text */
+    section[data-testid="stSidebar"] div[data-baseweb="select"] > div {
         background-color: #FFFFFF !important;
+        color: #000000 !important;
     }
 
-    /* Multiselect value text */
-    .stMultiSelect div[data-baseweb="select"] > div {
+    section[data-testid="stSidebar"] div[data-baseweb="select"] span {
         color: #000000 !important;
-        background-color: #FFFFFF !important;
     }
 
-    /* Number input text */
-    .stNumberInput input {
-        color: #000000 !important;
-        background-color: #FFFFFF !important;
+    section[data-testid="stSidebar"] div[data-baseweb="select"] svg {
+        fill: #000000 !important;
     }
 
-    /* Text input text */
-    .stTextInput input {
-        color: #000000 !important;
+    /* File uploader */
+    section[data-testid="stSidebar"] div[data-testid="stFileUploader"] section {
         background-color: #FFFFFF !important;
+        border-radius: 10px !important;
     }
 
-    /* Main hero banner */
+    section[data-testid="stSidebar"] div[data-testid="stFileUploader"] section * {
+        color: #000000 !important;
+    }
+
+    /* Multiselect selected pills */
+    section[data-testid="stSidebar"] .stMultiSelect span {
+        color: #000000 !important;
+    }
+
+    /* Checkbox labels stay white */
+    section[data-testid="stSidebar"] .stCheckbox label,
+    section[data-testid="stSidebar"] .stCheckbox p {
+        color: #FFFFFF !important;
+    }
+
     .hero {
         background: linear-gradient(135deg, var(--piraeus-teal) 0%, var(--piraeus-teal-soft) 100%);
         border-radius: 24px;
@@ -135,7 +142,7 @@ st.markdown(
     }
 
     .hero-title {
-        color: #FFFFFF;
+        color: #FFFFFF !important;
         font-size: 44px;
         line-height: 1.05;
         font-weight: 900;
@@ -159,59 +166,12 @@ st.markdown(
         margin-bottom: 20px;
     }
 
-    .section-card {
-        background: rgba(255, 255, 255, 0.93);
-        border: 1px solid var(--piraeus-border);
-        border-radius: 22px;
-        padding: 24px;
-        box-shadow: 0 10px 28px rgba(0, 47, 48, 0.08);
-        margin-bottom: 20px;
-    }
-
-    .section-title {
-        color: var(--piraeus-teal);
-        font-size: 22px;
-        font-weight: 850;
-        margin-bottom: 6px;
-    }
-
-    .section-subtitle {
-        color: var(--piraeus-muted);
-        font-size: 14px;
-        margin-bottom: 18px;
-    }
-
-    .download-box {
-        background: linear-gradient(135deg, var(--piraeus-teal) 0%, #053F41 100%);
-        border-radius: 22px;
-        padding: 22px;
-        border: 1px solid rgba(255, 217, 0, 0.55);
-        box-shadow: 0 12px 28px rgba(0, 47, 48, 0.14);
-        margin-bottom: 15px;
-    }
-
-    .download-box h3 {
-        color: var(--piraeus-yellow) !important;
-        margin-top: 0;
-    }
-
-    .download-box p {
-        color: #EAF5F5;
-        margin-bottom: 8px;
-    }
-
-    /* Metric cards */
     div[data-testid="stMetric"] {
         background: #FFFFFF;
         border: 1px solid var(--piraeus-border);
         border-radius: 20px;
-        padding: 18px 18px 14px 18px;
+        padding: 18px;
         box-shadow: 0 8px 22px rgba(0, 47, 48, 0.07);
-    }
-
-    div[data-testid="stMetric"] label {
-        color: var(--piraeus-muted) !important;
-        font-weight: 700;
     }
 
     div[data-testid="stMetricValue"] {
@@ -219,24 +179,17 @@ st.markdown(
         font-weight: 900;
     }
 
-    .stButton > button, .stDownloadButton > button {
+    .stButton > button,
+    .stDownloadButton > button {
         background: var(--piraeus-yellow) !important;
         color: var(--piraeus-teal) !important;
         border: 0 !important;
         border-radius: 14px !important;
         font-weight: 850 !important;
-        padding: 0.75rem 1.1rem !important;
-        box-shadow: 0 8px 18px rgba(0, 47, 48, 0.16);
-    }
-
-    .stButton > button:hover, .stDownloadButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 12px 24px rgba(0, 47, 48, 0.22);
     }
 
     h1, h2, h3, h4 {
         color: var(--piraeus-teal) !important;
-        letter-spacing: -0.02em;
     }
 
     div[data-testid="stDataFrame"] {
@@ -250,23 +203,10 @@ st.markdown(
         font-size: 13px;
         line-height: 1.45;
     }
-
-    .status-pill {
-        display: inline-block;
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: rgba(255, 217, 0, 0.25);
-        border: 1px solid rgba(255, 217, 0, 0.8);
-        color: var(--piraeus-teal);
-        font-weight: 750;
-        font-size: 13px;
-        margin-bottom: 14px;
-    }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 
 # =========================================================
 # FORMATTING HELPERS
@@ -274,6 +214,14 @@ st.markdown(
 # These functions control how numbers are displayed.
 # European format changes decimal points into commas.
 def format_number_full(x, style="American"):
+    """Format a numeric value into a string according to `style`.
+
+    - Returns empty string for NaN values.
+    - Preserves integer formatting for integer-like inputs.
+    - Uses European decimal/comma swapping when `style==EU_LOCALE`.
+    """
+
+    # Handle missing values first.
     if pd.isna(x):
         return ""
 
@@ -289,7 +237,11 @@ def format_number_full(x, style="American"):
 
 
 def format_dataframe_for_display(df: pd.DataFrame, style: str) -> pd.DataFrame:
-    # Converts every value in a dataframe into formatted text.
+    """Return a copy of `df` with all values converted to formatted strings.
+
+    This is useful for rendering numeric tables in the Streamlit UI
+    using the selected localization style.
+    """
     out = df.copy().astype(object)
     for col in out.columns:
         out[col] = out[col].map(lambda x: format_number_full(x, style))
@@ -311,6 +263,12 @@ def money_fmt(x):
 # The CSV detector tries to determine whether the user is using
 # American formatting or European formatting.
 def detect_csv_style(content: bytes) -> Tuple[str, str, str]:
+    """Heuristically detect the CSV delimiter and decimal separator.
+
+    Returns a tuple: (sep, decimal, locale_style) where `locale_style`
+    is either the US or European constant used elsewhere in the app.
+    """
+
     sample = content[:4000].decode("utf-8-sig", errors="ignore")
     first_lines = [line for line in sample.splitlines() if line.strip()][:5]
     joined = "\n".join(first_lines)
@@ -326,6 +284,13 @@ def detect_csv_style(content: bytes) -> Tuple[str, str, str]:
 
 
 def read_uploaded_table(uploaded_file) -> Tuple[pd.DataFrame, str]:
+    """Read an uploaded CSV or Excel file into a cleaned DataFrame.
+
+    Returns the dataframe and a detected locale style string.
+    Expects the first column to be a date column and coerces other
+    columns to numeric where possible.
+    """
+
     if uploaded_file is None:
         raise ValueError("Please upload a CSV or Excel file.")
 
@@ -373,7 +338,11 @@ def read_uploaded_table(uploaded_file) -> Tuple[pd.DataFrame, str]:
 # =========================================================
 @dataclass
 class OptimizationResult:
-    # This stores all important optimization outputs in one object.
+    """Container for optimization results and diagnostic matrices.
+
+    Holds the final weights, solver status/message, portfolio statistics,
+    and the covariance / Lagrangian matrices produced for inspection.
+    """
     weights: np.ndarray
     success: bool
     message: str
@@ -390,7 +359,12 @@ def infer_periods_per_year(freq: str) -> int:
 
 
 def compute_log_returns(prices: pd.DataFrame) -> pd.DataFrame:
-    # Log return formula: ln(current price / previous price)
+    """Compute log returns from a price dataframe.
+
+    Uses period-over-period natural log differences and drops rows
+    that are entirely NA (e.g. first observation).
+    """
+
     returns = np.log(prices / prices.shift(1))
     return returns.dropna(how="all")
 
@@ -401,6 +375,10 @@ def convert_risk_free_to_periodic(
     rf_input_mode: str,
 ) -> pd.Series:
     # Converts the risk-free rate into the same frequency as the return data.
+    """Convert various risk-free input formats into per-period decimals.
+
+    Supports annual percent, annual decimal, and already per-period decimal.
+    """
     if rf_input_mode == "Annual percent (e.g. 5.24)":
         return rf_series_input / (100.0 * periods_per_year)
     elif rf_input_mode == "Annual decimal (e.g. 0.0524)":
@@ -430,8 +408,7 @@ def parse_fixed_weights(text: str, asset_names: List[str]) -> Dict[str, float]:
     # Allows the user to manually fix certain weights.
     # Example: AAPL=0.10, MSFT=0.15
     fixed = {}
-    if not text or not text.strip():
-        return fixed
+    if not text or not text.strip(): return fixed
 
     valid_assets = {a.upper(): a for a in asset_names}
     parts = [p.strip() for p in text.split(",") if p.strip()]
@@ -457,8 +434,12 @@ def build_lagrangian_matrix(
     include_target_return: bool,
     fixed_weights: Optional[Dict[str, float]] = None,
 ) -> pd.DataFrame:
-    # This creates the Lagrangian-style matrix used to show
-    # the optimization structure behind the portfolio.
+    """Construct the augmented Lagrangian matrix for transparency.
+
+    This returns a square DataFrame where the upper-left block is
+    2*Covariance, and the bottom/right blocks encode equality
+    constraints (sum-to-one, optional target return, and fixed weights).
+    """
     assets = list(cov.index)
     fixed_weights = fixed_weights or {}
 
@@ -512,13 +493,13 @@ def solve_min_variance_with_constraints(
     long_only: bool = True,
     use_bank_constraint: bool = False,
 ) -> OptimizationResult:
-    # This is the main optimization function.
-    # It minimizes portfolio variance subject to:
-    # 1. weights summing to 1
-    # 2. optional target return
-    # 3. optional fixed weights
-    # 4. optional long-only constraint
-    # 5. optional 10% max position constraint
+    """Solve the minimum-variance portfolio under provided constraints.
+
+    Uses SLSQP to minimize portfolio variance with equality constraints
+    for sum-to-one, optional target return, and optional fixed weights.
+    Supports long-only and an optional per-position cap (bank constraint).
+    Returns an `OptimizationResult` with diagnostics and matrices.
+    """
 
     assets = list(mu_excess.index)
     mu = mu_excess.values
@@ -636,6 +617,12 @@ def create_excel_download(
     portfolio_variance_value: float,
     portfolio_volatility_value: float,
 ) -> bytes:
+    """Create an in-memory Excel workbook containing inputs, formulas,
+    and results suitable for downloading from the Streamlit UI.
+
+    Returns the workbook bytes.
+    """
+
     output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
@@ -1112,5 +1099,5 @@ except Exception as e:
 
 
 # To run this app:
-# python -m streamlit run app.py 
+#  python -m streamlit run app.py
 
